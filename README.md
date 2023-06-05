@@ -1,19 +1,19 @@
 ## python-script-failure-notifier
 
-This project provides a script, `local_error_notifier.py`, that monitors the execution of another Python script and sends email notifications in case of failure. The email configuration is customizable using environment
+This project provides a script, `error_notifier.py`, that monitors the execution of another Python script and sends email notifications in case of failure. The email configuration is customizable using environment
 variables. The monitoring also works with scripts that require input arguments.
 
 ### Usage:
 
 To monitor a Python script and receive email notifications for failures, follow these steps:
 
-Run the `local_error_notifier.py` script, providing the path to the script you want to monitor as an argument. You can also include any required input arguments for the script:
+Run the `error_notifier.py` script, providing the path to the script you want to monitor as an argument. You can also include any required input arguments for the script:
 
 ```
-python local_error_notifier.py path/to/your_script.py arg1 arg2 ...
+python error_notifier.py path/to/your_script.py arg1 arg2 ...
 ```
 
-The `local_error_notifier.py` script will execute the specified script with the provided arguments. If the script fails (returns a non-zero exit code), an email notification will be sent to the configured recipient email
+The `error_notifier.py` script will execute the specified script with the provided arguments. If the script fails (returns a non-zero exit code), an email notification will be sent to the configured recipient email
 address.
 
 ### Configuration:
@@ -28,6 +28,18 @@ The email configuration variables can be customized by modifying the environment
 |   SMTP_USERNAME |      SMTP server username      |
 |   SMTP_PASSWORD |      SMTP server password      |
 
+- The configuration variables can be passed to the script as a local file named `.env`. The file must be placed in the same directory as `error_notifier.py`:
+
+```
+SENDER_EMAIL=CHANGEME
+```
+
+- Alternatively, the environment variables can be passed to the script when it is called from the command line:
+
+```
+python error_notifier.py path/to/your_script.py arg1 --sender-email CHANGEME --recipient-email CHANGEME ...
+```
+
 ### Testing:
 
 To run the included test script, follow these steps:
@@ -40,7 +52,8 @@ To run the included test script, follow these steps:
 python -m unittest test.unit.test_error_notifier
 ```
 
-The tests will run and verify the functionality of the `local_error_notifier.py` script by executing a script with exit code 0 and another one with exit code 1. A custom email server configuration is necessary inside `test_error_notifier.py`.
+The tests will run and verify the functionality of the `error_notifier.py` script by executing a script with exit code 0 and another one with exit code 1. A custom email server configuration is necessary
+in the file `test/resources/.env`.
 
 ### License:
 

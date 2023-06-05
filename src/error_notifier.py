@@ -28,25 +28,30 @@ import smtplib
 import subprocess
 import sys
 from email.mime.text import MIMEText
-
-# Email Configuration, environment variables are used to allow easier testing
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
-RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL')
-
-SMTP_SERVER = os.environ.get('SMTP_SERVER')
-SMTP_USERNAME = os.environ.get('SMTP_USERNAME')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
+from pathlib import Path
 
 
-# Function to send email notifications
+def load_env_file():
+    this_path = Path(os.path.realpath(__file__))
+    env_file_path = os.path.join(this_path.parent, '.env')
+    if os.path.isfile(env_file_path):
+        with open(env_file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+    else:
+        print(f"Environment file '{env_file_path}' not found.")
+
+
 def send_email(subject: str, content: str):
     message = MIMEText(content)
     message['Subject'] = subject
-    message['From'] = SENDER_EMAIL
-    message['To'] = RECIPIENT_EMAIL
-
-    with smtplib.SMTP(SMTP_SERVER) as server:
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+    message['From'] = os.getenv('SENDER_EMAIL')
+    message['To'] = os.getenv('RECIPIENT_EMAIL')
+    with smtplib.SMTP(os.getenv('SMTP_SERVER')) as server:
+        server.login(os.getenv('SMTP_USERNAME'), os.getenv('SMTP_PASSWORD'))
         server.send_message(message)
 
 
@@ -57,6 +62,9 @@ if len(sys.argv) < 2:
 
 script_to_monitor = sys.argv[1]
 script_args = sys.argv[2:]
+
+# Load Email configuration from .env file as environment variables
+load_env_file()
 
 # Monitoring and notification
 command = ['python3', script_to_monitor] + script_args
