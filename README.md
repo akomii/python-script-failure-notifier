@@ -37,7 +37,7 @@ SENDER_EMAIL=CHANGEME
 - Alternatively, the environment variables can be passed to the script when it is called from the command line:
 
 ```
-python error_notifier.py path/to/your_script.py arg1 --sender-email CHANGEME --recipient-email CHANGEME ...
+python error_notifier.py path/to/your_script.py arg1 --SENDER_EMAIL CHANGEME --RECIPIENT_EMAIL CHANGEME ...
 ```
 
 ### Testing:
