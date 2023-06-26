@@ -42,7 +42,7 @@ def load_env_file():
                     key, value = line.split('=', 1)
                     os.environ[key] = value
     else:
-        print(f"Environment file '{env_file_path}' not found.")
+        print(f"Environment file  '{env_file_path}' not found.")
 
 
 def send_email(subject: str, content: str):
@@ -50,7 +50,7 @@ def send_email(subject: str, content: str):
     message['Subject'] = subject
     message['From'] = os.getenv('SENDER_EMAIL')
     message['To'] = os.getenv('RECIPIENT_EMAIL')
-    with smtplib.SMTP(os.getenv('SMTP_SERVER')) as server:
+    with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER')) as server:
         server.login(os.getenv('SMTP_USERNAME'), os.getenv('SMTP_PASSWORD'))
         server.send_message(message)
 
@@ -68,8 +68,12 @@ load_env_file()
 
 # Monitoring and notification
 command = ['python3', script_to_monitor] + script_args
-result = subprocess.run(command, capture_output=True)
+result = subprocess.run(command, capture_output=True, text=True)
+
+# Print subprocess output
+print(result.stdout)
+print(result.stderr)
 
 if result.returncode != 0:
-    error_message = f"Script '{script_to_monitor}' failed with exit code {result.returncode}.\n\n｡ﾟ･ (>﹏<) ･ﾟ｡\n\n{result.stderr.decode('utf-8')}"
+    error_message = f"Script '{script_to_monitor}' failed with exit code {result.returncode}.\n\n｡ﾟ･ (>﹏<) ･ﾟ｡\n\n{result.stderr}"
     send_email('script error (╯°益°)╯彡┻━┻', error_message)
