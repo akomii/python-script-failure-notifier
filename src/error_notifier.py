@@ -2,7 +2,7 @@
 """
 Created on 02.06.23
 @AUTHOR: Alexander Kombeiz (akombeiz@ukaachen.de)
-@VERSION=1.0
+@VERSION=1.1
 """
 
 #
@@ -31,49 +31,58 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 
-def load_env_file():
-    this_path = Path(os.path.realpath(__file__))
-    env_file_path = os.path.join(this_path.parent, '.env')
-    if os.path.isfile(env_file_path):
-        with open(env_file_path, 'r') as file:
-            for line in file:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    key, value = line.split('=', 1)
-                    os.environ[key] = value
-    else:
-        print(f"Environment file  '{env_file_path}' not found.")
+class Notifier:
+    def __init__(self, env_file):
+        self.env_file = env_file
+        self.load_env_file()
+
+    def load_env_file(self):
+        this_path = Path(os.path.realpath(__file__))
+        env_file_path = os.path.join(this_path.parent, self.env_file)
+        if os.path.isfile(env_file_path):
+            with open(env_file_path, 'r') as file:
+                for line in file:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        key, value = line.split('=', 1)
+                        os.environ[key] = value
+        else:
+            raise FileNotFoundError(f"Environment file  '{env_file_path}' not found.")
+
+    def send_email(self, subject: str, content: str):
+        message = MIMEText(content)
+        message['Subject'] = subject
+        message['From'] = os.getenv('SENDER_EMAIL')
+        message['To'] = os.getenv('RECIPIENT_EMAIL')
+        with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER')) as server:
+            server.login(os.getenv('SMTP_USERNAME'), os.getenv('SMTP_PASSWORD'))
+            server.send_message(message)
 
 
-def send_email(subject: str, content: str):
-    message = MIMEText(content)
-    message['Subject'] = subject
-    message['From'] = os.getenv('SENDER_EMAIL')
-    message['To'] = os.getenv('RECIPIENT_EMAIL')
-    with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER')) as server:
-        server.login(os.getenv('SMTP_USERNAME'), os.getenv('SMTP_PASSWORD'))
-        server.send_message(message)
+def main():
+    # Check for command line arguments
+    if len(sys.argv) < 2:
+        print('Please provide the path to the script to monitor as an input argument.')
+        sys.exit(1)
+
+    script_to_monitor = sys.argv[1]
+    script_args = sys.argv[2:]
+
+    # Initialize Notifier with .env file
+    notifier = Notifier('.env')
+
+    # Monitoring and notification
+    command = ['python3', script_to_monitor] + script_args
+    result = subprocess.run(command, capture_output=True, text=True)
+
+    # Print subprocess output
+    print(result.stdout)
+    print(result.stderr)
+
+    if result.returncode != 0:
+        error_message = f"Script '{script_to_monitor}' failed with exit code {result.returncode}.\n\n｡ﾟ･ (>﹏<) ･ﾟ｡\n\n{result.stderr}"
+        notifier.send_email('script error (╯°益°)╯彡┻━┻', error_message)
 
 
-# Get the script to monitor and its input arguments from command line arguments
-if len(sys.argv) < 2:
-    print('Please provide the path to the script to monitor as an input argument.')
-    sys.exit(1)
-
-script_to_monitor = sys.argv[1]
-script_args = sys.argv[2:]
-
-# Load Email configuration from .env file as environment variables
-load_env_file()
-
-# Monitoring and notification
-command = ['python3', script_to_monitor] + script_args
-result = subprocess.run(command, capture_output=True, text=True)
-
-# Print subprocess output
-print(result.stdout)
-print(result.stderr)
-
-if result.returncode != 0:
-    error_message = f"Script '{script_to_monitor}' failed with exit code {result.returncode}.\n\n｡ﾟ･ (>﹏<) ･ﾟ｡\n\n{result.stderr}"
-    send_email('script error (╯°益°)╯彡┻━┻', error_message)
+if __name__ == "__main__":
+    main()
