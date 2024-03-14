@@ -22,18 +22,27 @@ class TestErrorNotifier(unittest.TestCase):
         this_path = Path(os.path.realpath(__file__))
         path_src = os.path.join(this_path.parents[2], 'src')
         cls.__PATH_ERROR_NOTIFIER = os.path.join(path_src, 'error_notifier.py')
-        path_test_resources = os.path.join(this_path.parents[1], 'resources')
-        cls.__PATH_SUCCESS_SCRIPT = os.path.join(path_test_resources, 'script_that_succeds.py')
-        cls.__PATH_FAILURE_SCRIPT = os.path.join(path_test_resources, 'script_that_fails.py')
+        cls.__PATH_TEST_RESOURCES = os.path.join(this_path.parents[1], 'resources')
         cls.load_test_env_file()
 
-    def test_success_script(self):
-        command = ['python3', self.__PATH_ERROR_NOTIFIER, self.__PATH_SUCCESS_SCRIPT, 'Hello World']
+    @classmethod
+    def tearDownClass(cls):
+        for file in os.listdir(cls.__PATH_TEST_RESOURCES):
+            if file.endswith('.log') or file.endswith('.log.err'):
+                os.remove(os.path.join(cls.__PATH_TEST_RESOURCES, file))
+
+    def run_script_with_logging(self, script_name, *args):
+        path_script = os.path.join(self.__PATH_TEST_RESOURCES, script_name)
+        script_base_name = os.path.splitext(script_name)[0]
+        path_log = os.path.join(self.__PATH_TEST_RESOURCES, f"{script_base_name}.log")
+        command = ['python3', self.__PATH_ERROR_NOTIFIER, path_log, path_script] + list(args)
         subprocess.run(command, env=os.environ)
 
-    def test_failure_script(self):
-        command = ['python3', self.__PATH_ERROR_NOTIFIER, self.__PATH_FAILURE_SCRIPT]
-        subprocess.run(command, env=os.environ)
+    def test_script(self):
+        self.run_script_with_logging('info_logging.py', 'Hello World')
+        self.run_script_with_logging('error_logging.py', 'Hello World')
+        self.run_script_with_logging('exception.py')
+        self.run_script_with_logging('systemexit.py')
 
 
 if __name__ == '__main__':
