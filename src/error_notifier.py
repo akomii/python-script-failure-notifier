@@ -89,7 +89,7 @@ def main():
         result = subprocess.run(command, stdout=log_file, stderr=err_file, text=True)
         err_file.seek(0)
         errors = err_file.read()
-        if errors:
+        if result.returncode != 0 and errors:
             error_message = f"Script '{script_to_monitor}' failed with exit code {result.returncode}.\n\n｡ﾟ･ (>﹏<) ･ﾟ｡\n\n{errors}"
             send_email('Script error (╯°益°)╯彡┻━┻', error_message)
 
